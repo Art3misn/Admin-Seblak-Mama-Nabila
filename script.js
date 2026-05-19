@@ -1,4 +1,4 @@
-import { db } from "../firebase.js";
+import { db } from "./firebase.js";
 
 import {
 
@@ -29,15 +29,6 @@ document.getElementById("totalOrders");
 const totalIncome =
 document.getElementById("totalIncome");
 
-const saveScheduleBtn =
-document.getElementById("saveSchedule");
-
-const openTime =
-document.getElementById("openTime");
-
-const closeTime =
-document.getElementById("closeTime");
-
 const notifSound =
 document.getElementById("notifSound");
 
@@ -45,7 +36,7 @@ const stockContainer =
 document.getElementById("stockContainer");
 
 /* =========================================
-   REALTIME ORDER
+   ORDER REALTIME
 ========================================= */
 
 let firstLoad = true;
@@ -73,9 +64,15 @@ onSnapshot(
     totalOrders.innerText =
     snapshot.size;
 
-    /* NOTIF ORDER BARU */
+    if(
 
-    if(!firstLoad){
+      !firstLoad &&
+
+      snapshot.docChanges().some(
+        change => change.type === "added"
+      )
+
+    ){
 
       notifSound?.play();
 
@@ -90,63 +87,34 @@ onSnapshot(
 
       income += data.total || 0;
 
-      /* GROUP ITEM */
+      let itemsHTML = "";
 
-      const grouped = {};
+      if(Array.isArray(data.items)){
 
-      if(data.items){
+        data.items.forEach((item)=>{
 
-        data.items.forEach(item=>{
+          itemsHTML += `
 
-          if(!grouped[item.name]){
+            <div class="item">
 
-            grouped[item.name] = {
+              <span>
+                ${item.name}
+              </span>
 
-              qty:0,
-              price:item.price
+              <strong>
 
-            };
+                Rp ${(item.price || 0)
+                .toLocaleString("id-ID")}
 
-          }
+              </strong>
 
-          grouped[item.name].qty++;
+            </div>
+
+          `;
 
         });
 
       }
-
-      /* ITEM HTML */
-
-      let itemsHTML = "";
-
-      Object.keys(grouped).forEach(name=>{
-
-        const item = grouped[name];
-
-        itemsHTML += `
-
-          <div class="item">
-
-            <span>
-              ${name} x${item.qty}
-            </span>
-
-            <strong>
-
-              Rp ${(
-                item.qty *
-                item.price
-              ).toLocaleString("id-ID")}
-
-            </strong>
-
-          </div>
-
-        `;
-
-      });
-
-      /* STATUS */
 
       let statusClass =
       "waiting";
@@ -173,8 +141,6 @@ onSnapshot(
         "✅ Selesai";
 
       }
-
-      /* CARD */
 
       const card =
       document.createElement("div");
@@ -210,18 +176,6 @@ onSnapshot(
             📍 ${data.customerAddress || "-"}
           </p>
 
-          <p>
-            🌶️ ${data.spicyLevel || "-"}
-          </p>
-
-          <p>
-            🍲 ${data.soupType || "-"}
-          </p>
-
-          <p>
-            🧂 ${data.tasteType || "-"}
-          </p>
-
         </div>
 
         <div class="items">
@@ -241,21 +195,18 @@ onSnapshot(
 
           <button
             class="process-btn"
-            data-id="${docSnap.id}"
           >
             Diproses
           </button>
 
           <button
             class="done-btn"
-            data-id="${docSnap.id}"
           >
             ✅ Selesai
           </button>
 
           <button
             class="delete-btn"
-            data-id="${docSnap.id}"
           >
             🗑 Hapus
           </button>
@@ -264,91 +215,68 @@ onSnapshot(
 
       `;
 
-      /* BUTTON */
-
-      const processBtn =
       card.querySelector(
         ".process-btn"
-      );
+      ).onclick = async()=>{
 
-      const doneBtn =
+        await updateDoc(
+
+          doc(
+            db,
+            "orders",
+            docSnap.id
+          ),
+
+          {
+            status:"Diproses"
+          }
+
+        );
+
+      };
+
       card.querySelector(
         ".done-btn"
-      );
+      ).onclick = async()=>{
 
-      const deleteBtn =
+        await updateDoc(
+
+          doc(
+            db,
+            "orders",
+            docSnap.id
+          ),
+
+          {
+            status:"Selesai"
+          }
+
+        );
+
+      };
+
       card.querySelector(
         ".delete-btn"
-      );
+      ).onclick = async()=>{
 
-      processBtn.addEventListener(
-        "click",
-        async()=>{
+        const yes =
+        confirm(
+          "Hapus order ini?"
+        );
 
-          await updateDoc(
+        if(!yes) return;
 
-            doc(
-              db,
-              "orders",
-              docSnap.id
-            ),
+        await deleteDoc(
 
-            {
-              status:"Diproses"
-            }
+          doc(
+            db,
+            "orders",
+            docSnap.id
+          )
 
-          );
+        );
 
-        }
-
-      );
-
-      doneBtn.addEventListener(
-        "click",
-        async()=>{
-
-          await updateDoc(
-
-            doc(
-              db,
-              "orders",
-              docSnap.id
-            ),
-
-            {
-              status:"Selesai"
-            }
-
-          );
-
-        }
-
-      );
-
-      deleteBtn.addEventListener(
-        "click",
-        async()=>{
-
-          const confirmDelete =
-          confirm(
-            "Hapus order ini?"
-          );
-
-          if(!confirmDelete) return;
-
-          await deleteDoc(
-
-            doc(
-              db,
-              "orders",
-              docSnap.id
-            )
-
-          );
-
-        }
-
-      );
+      };
 
       ordersGrid.appendChild(card);
 
@@ -366,157 +294,106 @@ onSnapshot(
    STORE OPEN CLOSE
 ========================================= */
 
-/* =========================================
-   STORE OPEN CLOSE REALTIME
-========================================= */
+const toggleStoreBtn =
+document.getElementById(
+  "toggleStore"
+);
 
-window.addEventListener(
-  "DOMContentLoaded",
-  ()=>{
+const storeStatusText =
+document.getElementById(
+  "storeStatusText"
+);
 
-    const toggleStoreBtn =
-    document.getElementById(
-      "toggleStore"
-    );
+const storeRef =
+doc(
+  db,
+  "settings",
+  "storeStatus"
+);
 
-    const storeStatusText =
-    document.getElementById(
-      "storeStatusText"
-    );
+setDoc(
 
-    const storeCard =
-    document.getElementById(
-      "storeCard"
-    );
+  storeRef,
 
-    if(
-      !toggleStoreBtn ||
-      !storeStatusText
-    ) return;
+  {
+    closed:false
+  },
 
-    const storeRef =
-    doc(
-      db,
-      "settings",
-      "storeStatus"
-    );
+  {
+    merge:true
+  }
 
-    /* DEFAULT */
+);
 
-    setDoc(
-      storeRef,
-      {
-        closed:false
-      },
-      {
-        merge:true
-      }
-    );
+onSnapshot(
 
-    /* REALTIME */
+  storeRef,
 
-    onSnapshot(
-      storeRef,
-      (snap)=>{
+  (snap)=>{
 
-        if(!snap.exists()) return;
+    const data =
+    snap.data();
 
-        const data =
-        snap.data();
+    const closed =
+    data?.closed || false;
 
-        const closed =
-        data.closed || false;
+    if(closed){
 
-        if(closed){
+      storeStatusText.innerHTML =
+      "🔴 Warung Tutup";
 
-          storeStatusText.innerHTML =
-          "🔴 Warung Sedang Tutup";
+      toggleStoreBtn.innerHTML =
+      "🌤️ Buka Warung";
 
-          toggleStoreBtn.innerHTML =
-          "🌤️ Buka Warung";
+      toggleStoreBtn.className =
+      "closed";
 
-          toggleStoreBtn.classList.remove(
-            "open"
-          );
+    }
 
-          toggleStoreBtn.classList.add(
-            "closed"
-          );
+    else{
 
-          if(storeCard){
+      storeStatusText.innerHTML =
+      "🟢 Warung Buka";
 
-            storeCard.style.background =
-            "linear-gradient(135deg,#fecaca,#fca5a5)";
+      toggleStoreBtn.innerHTML =
+      "🌙 Tutup Warung";
 
-          }
+      toggleStoreBtn.className =
+      "open";
 
-        }
-
-        else{
-
-          storeStatusText.innerHTML =
-          "🟢 Warung Sedang Buka";
-
-          toggleStoreBtn.innerHTML =
-          "🌙 Tutup Warung";
-
-          toggleStoreBtn.classList.remove(
-            "closed"
-          );
-
-          toggleStoreBtn.classList.add(
-            "open"
-          );
-
-          if(storeCard){
-
-            storeCard.style.background =
-            "linear-gradient(135deg,#bbf7d0,#86efac)";
-
-          }
-
-        }
-
-      }
-
-    );
-
-    /* TOGGLE */
-
-    toggleStoreBtn.addEventListener(
-      "click",
-      async()=>{
-
-        const snap =
-        await getDoc(storeRef);
-
-        let closed = false;
-
-        if(snap.exists()){
-
-          closed =
-          snap.data().closed || false;
-
-        }
-
-        await setDoc(
-          storeRef,
-          {
-            closed:!closed,
-            updatedAt:Date.now()
-          },
-          {
-            merge:true
-          }
-        );
-
-      }
-    );
+    }
 
   }
+
 );
+
+toggleStoreBtn.onclick =
+async()=>{
+
+  const snap =
+  await getDoc(storeRef);
+
+  const closed =
+  snap.data()?.closed || false;
+
+  await setDoc(
+
+    storeRef,
+
+    {
+      closed:!closed
+    },
+
+    {
+      merge:true
+    }
+
+  );
+
+};
+
 /* =========================================
-   TOPPING LIST ADMIN
+   TOPPING
 ========================================= */
 
 const toppingList = [
@@ -580,152 +457,198 @@ const toppingList = [
   "Daun Jeruk Nipis"
 
 ];
+
 /* =========================================
-   STOCK REALTIME
+   AUTO CREATE STOCK DOCS
 ========================================= */
 
-function renderStocks(){
+/* =========================================
+   AUTO CREATE STOCK DOCS
+========================================= */
+
+async function initStocks(){
+
+  for(const item of toppingList){
+
+    await setDoc(
+
+      doc(
+        db,
+        "stocks",
+        item.replaceAll("/","-")
+      ),
+
+      {
+        available:true
+      },
+
+      {
+        merge:true
+      }
+
+    );
+
+  }
+
+}
+
+/* =========================================
+   STOCK RENDER
+========================================= */
+
+function renderStocks(stockData = {}){
+
+  if(!stockContainer) return;
 
   stockContainer.innerHTML = "";
 
   toppingList.forEach((item)=>{
 
-    const stockRef =
-    doc(db,"stocks",item);
+    const stock =
+    stockData[item] !== false;
 
-    onSnapshot(
-      stockRef,
-      (stockSnap)=>{
+    const div =
+    document.createElement("div");
 
-        let stock = true;
+    div.className =
+    "stock-item";
 
-        if(stockSnap.exists()){
+    div.innerHTML = `
 
-          stock =
-          stockSnap.data().available;
+      <div class="stock-top">
 
-        }
+        <strong>${item}</strong>
 
-        let existing =
-        document.getElementById(
-          `stock-${item}`
-        );
+        <span class="${
+          stock
+          ? "ready"
+          : "empty"
+        }">
 
-        const html = `
+          ${
+            stock
+            ? "READY"
+            : "HABIS"
+          }
 
-          <div class="stock-top">
+        </span>
 
-            <strong>${item}</strong>
+      </div>
 
-            <span class="${
-              stock
-              ? "ready"
-              : "empty"
-            }">
+      <div class="stock-actions">
 
-              ${
-                stock
-                ? "READY"
-                : "HABIS"
-              }
+        <button
+          class="
+          stock-btn
+          ${stock ? "active" : ""}
+          "
+        >
+          Ready
+        </button>
 
-            </span>
+        <button
+          class="
+          stock-btn
+          ${!stock ? "active" : ""}
+          "
+        >
+          Habis
+        </button>
 
-          </div>
+      </div>
 
-          <div class="stock-actions">
+    `;
 
-            <button
-              class="
-              stock-btn
-              ${stock ? "active" : ""}
-              "
-              onclick="
-              setStock(
-                '${item}',
-                true
-              )
-              "
-            >
-              Ready
-            </button>
-
-            <button
-              class="
-              stock-btn
-              ${!stock ? "active" : ""}
-              "
-              onclick="
-              setStock(
-                '${item}',
-                false
-              )
-              "
-            >
-              Habis
-            </button>
-
-          </div>
-
-        `;
-
-        if(existing){
-
-          existing.innerHTML =
-          html;
-
-        }
-
-        else{
-
-          const div =
-          document.createElement("div");
-
-          div.className =
-          "stock-item";
-
-          div.id =
-          `stock-${item}`;
-
-          div.innerHTML =
-          html;
-
-          stockContainer.appendChild(div);
-
-        }
-
-      }
+    const btns =
+    div.querySelectorAll(
+      ".stock-btn"
     );
+
+    btns[0].onclick =
+    ()=>{
+
+      setStock(
+        item,
+        true
+      );
+
+    };
+
+    btns[1].onclick =
+    ()=>{
+
+      setStock(
+        item,
+        false
+      );
+
+    };
+
+    stockContainer.appendChild(div);
 
   });
 
 }
 
-/* SET STOCK */
+/* =========================================
+   SET STOCK
+========================================= */
 
-window.setStock = async(
+async function setStock(
   item,
   status
-)=>{
+){
 
   await setDoc(
 
     doc(
       db,
       "stocks",
-      item
+      item.replaceAll("/","-")
     ),
 
     {
-
       available:status
+    },
 
+    {
+      merge:true
     }
 
   );
 
-  renderStocks();
+}
 
-};
+/* =========================================
+   REALTIME STOCK
+========================================= */
 
+onSnapshot(
+
+  collection(db,"stocks"),
+
+  (snapshot)=>{
+
+    const stockData = {};
+
+    snapshot.forEach((docSnap)=>{
+
+      stockData[
+        docSnap.id.replaceAll("-","/")
+      ] =
+      docSnap.data().available;
+
+    });
+
+    renderStocks(stockData);
+
+  }
+
+);
+
+/* =========================================
+   START
+========================================= */
+
+initStocks();
 renderStocks();
