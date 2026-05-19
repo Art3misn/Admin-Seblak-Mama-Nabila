@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+  <meta charset="UTF-8"/>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Admin Seblak</title>
+
+  <link rel="stylesheet" href="style.css"/>
+
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+
+  <nav class="navbar">
+
+    <h1>
+      ADMIN SEBLAK
+    </h1>
+
+    <div class="live-box">
+
+      <span class="dot"></span>
+
+      REALTIME
+
+    </div>
+
+  </nav>
+
+  <!-- STATS -->
+
+  <section class="stats">
+
+    <div class="stat-card">
+
+      <h3>Total Order</h3>
+
+      <h2 id="totalOrders">
+        0
+      </h2>
+
+    </div>
+
+    <div class="stat-card">
+
+      <h3>Pendapatan</h3>
+
+      <h2 id="totalIncome">
+        Rp 0
+      </h2>
+
+    </div>
+
+  </section>
+
+  <!-- ORDER -->
+
+  <section class="orders-section">
+
+    <div class="section-title">
+<!-- STOCK -->
+ <div class="store-box">
+
+  <button id="toggleStore">
+    Loading...
+  </button>
+
+  <p id="storeStatusText"></p>
+
+</div>
+
+<div class="card">
+
+  <h2>Atur Stock Topping</h2>
+
+  <div id="stockContainer"></div>
+
+</div>
+      <h2>Pesanan Masuk</h2>
+
+    </div>
+
+    <div
+      class="orders-grid"
+      id="ordersGrid"
+    ></div>
+    <!-- AUDIO -->
+
+  <audio id="notifSound">
+
+    <source
+      src="Orderan masuk.mp3" 
+      type="audio/mpeg"
+    >
+
+  </audio>
+
+  <div class="store-status">
+
+  </section>
+
+  <script type="module" src="script.js"></script>
+
+</body>
+</html>
