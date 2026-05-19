@@ -418,7 +418,7 @@ const toppingList = [
 
   "Lidah",
   "Bihun",
-  "Tahu Kering/3pcs",
+  "Tahu Kering 3pcs",
   "Usus",
   "Kembang Tahu",
 
