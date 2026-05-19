@@ -652,3 +652,202 @@ onSnapshot(
 
 initStocks();
 renderStocks();
+
+
+/* =========================
+   ADMIN IOS OPTIMIZATION
+========================= */
+
+/* IOS DETECT */
+
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+|| (navigator.platform === 'MacIntel'
+&& navigator.maxTouchPoints > 1);
+
+if(isIOS){
+
+  document.body.classList.add("ios");
+
+}
+
+/* FIX IOS HEIGHT */
+
+function setAppHeight(){
+
+  document.documentElement.style.setProperty(
+    '--app-height',
+    `${window.innerHeight}px`
+  );
+
+}
+
+window.addEventListener("resize", setAppHeight);
+
+setAppHeight();
+
+/* SIDEBAR */
+
+const menuBtn =
+document.querySelector(".menu-btn");
+
+const sidebar =
+document.querySelector(".sidebar");
+
+if(menuBtn){
+
+  menuBtn.addEventListener("click",()=>{
+
+    sidebar.classList.toggle("active");
+
+  });
+
+}
+
+/* CLOSE SIDEBAR MOBILE */
+
+document.addEventListener("click",(e)=>{
+
+  if(
+    window.innerWidth <= 768 &&
+    !sidebar.contains(e.target) &&
+    !menuBtn.contains(e.target)
+  ){
+
+    sidebar.classList.remove("active");
+
+  }
+
+});
+
+/* PREVENT DOUBLE TAP ZOOM */
+
+let lastTouchEnd = 0;
+
+document.addEventListener(
+  "touchend",
+  function(event){
+
+    const now = (new Date()).getTime();
+
+    if(now - lastTouchEnd <= 300){
+
+      event.preventDefault();
+
+    }
+
+    lastTouchEnd = now;
+
+  },
+  { passive:false }
+);
+
+/* LAZY IMAGE */
+
+document.querySelectorAll("img")
+.forEach(img=>{
+
+  img.loading = "lazy";
+
+});
+
+/* FIREBASE LISTENER MANAGER */
+
+const listeners = [];
+
+function registerListener(unsub){
+
+  listeners.push(unsub);
+
+}
+
+window.addEventListener(
+  "beforeunload",
+  ()=>{
+
+    listeners.forEach(unsub=>{
+
+      if(typeof unsub === "function"){
+
+        unsub();
+
+      }
+
+    });
+
+  }
+);
+
+/* REALTIME UPDATE SMOOTH */
+
+function smoothRender(callback){
+
+  requestAnimationFrame(()=>{
+
+    callback();
+
+  });
+
+}
+
+/* IOS INPUT FIX */
+
+const inputs =
+document.querySelectorAll(
+  "input, textarea, select"
+);
+
+inputs.forEach(input=>{
+
+  input.addEventListener("focus",()=>{
+
+    document.body.classList.add("keyboard-open");
+
+  });
+
+  input.addEventListener("blur",()=>{
+
+    document.body.classList.remove("keyboard-open");
+
+  });
+
+});
+
+/* PASSIVE SCROLL */
+
+window.addEventListener(
+  "touchstart",
+  ()=>{},
+  { passive:true }
+);
+
+/* MODAL IOS FIX */
+
+function openModal(id){
+
+  const modal =
+  document.getElementById(id);
+
+  if(modal){
+
+    modal.style.display = "flex";
+
+    document.body.style.overflow = "hidden";
+
+  }
+
+}
+
+function closeModal(id){
+
+  const modal =
+  document.getElementById(id);
+
+  if(modal){
+
+    modal.style.display = "none";
+
+    document.body.style.overflow = "";
+
+  }
+
+}
