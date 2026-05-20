@@ -444,7 +444,7 @@ const toppingList = [
   "Sosis Sapi Mini",
   "Sosis Besar",
   "Crab Stick",
-  "Tofu",
+  "Seafood Tofu",
 
   "Fish Roll",
   "Odeng",
