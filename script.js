@@ -399,13 +399,13 @@ async()=>{
 const toppingList = [
 
   "Sawi Putih",
-  "Somay Kering",
+  "Cuanki",
   "Ceker",
-  "Bakso Aci",
+  "Cirawang",
   "Dimsum",
 
   "Tahu Aci",
-  "Somay Basah",
+  "Pangsit Basah",
   "Tulang",
   "Kerupuk Putih",
   "Kerupuk Merah",
@@ -430,7 +430,7 @@ const toppingList = [
 
   "Tahu Putih",
   "Bakso Ikan",
-  "Cilok",
+  "Cilok Gajih",
   "Bakso Sedang",
   "Tahu Isi",
 
