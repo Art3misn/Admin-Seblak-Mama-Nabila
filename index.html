@@ -6,12 +6,16 @@
   <meta charset="UTF-8"/>
 
   <meta
-name="viewport"
-content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
 
   <title>Admin Seblak</title>
 
-  <link rel="stylesheet" href="style.css"/>
+  <link
+    rel="stylesheet"
+    href="style.css"
+  />
 
 </head>
 
@@ -61,30 +65,49 @@ content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cove
 
   </section>
 
-  <!-- ORDER -->
+  <!-- STORE -->
+
+  <section class="store-section">
+
+    <div
+      class="store-box"
+      id="storeCard"
+    >
+
+      <button id="toggleStore">
+        Loading...
+      </button>
+
+      <p id="storeStatusText">
+        Memuat...
+      </p>
+
+    </div>
+
+  </section>
+
+  <!-- STOCK -->
+
+  <section class="stock-section">
+
+    <h2 class="section-heading">
+      Atur Stock Topping
+    </h2>
+
+    <div id="stockContainer"></div>
+    
+
+  </section>
+
+  <!-- ORDERS -->
 
   <section class="orders-section">
 
     <div class="section-title">
-<!-- STOCK -->
- <div class="store-box">
 
-  <button id="toggleStore">
-    Loading...
-  </button>
-
-  <p id="storeStatusText"></p>
-
-</div>
-
-<div class="card">
-
-  <h2>Atur Stock Topping</h2>
-
-  <div id="stockContainer"></div>
-
-</div>
-      <h2>Pesanan Masuk</h2>
+      <h2>
+        Pesanan Masuk
+      </h2>
 
     </div>
 
@@ -92,22 +115,24 @@ content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cove
       class="orders-grid"
       id="ordersGrid"
     ></div>
-    <!-- AUDIO -->
+
+  </section>
+
+  <!-- AUDIO -->
 
   <audio id="notifSound">
 
     <source
-      src="Orderan masuk.mp3" 
+      src="Orderan masuk.mp3"
       type="audio/mpeg"
     >
 
   </audio>
 
-  <div class="store-status">
-
-  </section>
-
-  <script type="module" src="script.js"></script>
+  <script
+    type="module"
+    src="script.js"
+  ></script>
 
 </body>
 </html>
