@@ -484,7 +484,7 @@ const toppingList = [
   "Cuanki",
   "Ceker",
   "Cirawang",
-  "Dimsum",
+  "Dimsum Aci",
 
   "Tahu Aci",
   "Pangsit Basah",
@@ -526,7 +526,7 @@ const toppingList = [
   "Sosis Sapi Mini",
   "Sosis Besar",
   "Crab Stick",
-  "Tofu",
+  "Seafood Tofu",
 
   "Fish Roll",
   "Odeng",
