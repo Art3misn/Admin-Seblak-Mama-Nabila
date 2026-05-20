@@ -432,7 +432,7 @@ const toppingList = [
   "Bakso Ikan",
   "Cilok Gajih",
   "Bakso Sedang",
-  "Tahu Isi",
+  "Tahu Bakso",
 
   "Bakso Besar",
   "Sawi Hijau",
