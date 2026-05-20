@@ -59,7 +59,8 @@ onSnapshot(
 
     ordersGrid.innerHTML = "";
 
-    let income = 0;
+    let foodIncome = 0;
+    let shippingIncome = 0;
 
     totalOrders.innerText =
     snapshot.size;
@@ -85,7 +86,18 @@ onSnapshot(
       const data =
       docSnap.data();
 
-      income += data.total || 0;
+      const total =
+      data.total || 0;
+
+      const shipping =
+      data.shipping || 0;
+
+      const foodTotal =
+      total - shipping;
+
+      foodIncome += foodTotal;
+
+      shippingIncome += shipping;
 
       let itemsHTML = "";
 
@@ -229,6 +241,19 @@ onSnapshot(
 
         <div class="total">
 
+          🍜 Seblak:
+          Rp ${foodTotal
+          .toLocaleString("id-ID")}
+
+          <br><br>
+
+          🚚 Ongkir:
+          Rp ${(data.shipping || 0)
+          .toLocaleString("id-ID")}
+
+          <br><br>
+
+          💰 Total:
           Rp ${(data.total || 0)
           .toLocaleString("id-ID")}
 
@@ -325,9 +350,23 @@ onSnapshot(
 
     });
 
-    totalIncome.innerText =
+    totalIncome.innerHTML = `
 
-    `Rp ${income.toLocaleString("id-ID")}`;
+      🍜 Seblak:
+      Rp ${foodIncome.toLocaleString("id-ID")}
+
+      <br><br>
+
+      🚚 Ongkir:
+      Rp ${shippingIncome.toLocaleString("id-ID")}
+
+      <br><br>
+
+      💰 Total:
+      Rp ${(foodIncome + shippingIncome)
+      .toLocaleString("id-ID")}
+
+    `;
 
   }
 
@@ -442,13 +481,13 @@ async()=>{
 const toppingList = [
 
   "Sawi Putih",
-  "Somay Kering",
+  "Cuanki",
   "Ceker",
-  "Bakso Aci",
+  "Cirawang",
   "Dimsum",
 
   "Tahu Aci",
-  "Somay Basah",
+  "Pangsit Basah",
   "Tulang",
   "Kerupuk Putih",
   "Kerupuk Merah",
@@ -473,9 +512,9 @@ const toppingList = [
 
   "Tahu Putih",
   "Bakso Ikan",
-  "Cilok",
+  "Cilok Gajih",
   "Bakso Sedang",
-  "Tahu Isi",
+  "Tahu Bakso",
 
   "Bakso Besar",
   "Sawi Hijau",
