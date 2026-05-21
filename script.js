@@ -16,6 +16,37 @@ import {
 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import {
+
+  getMessaging,
+  getToken,
+  onMessage
+
+}
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+
+/* =========================================
+   FIREBASE MESSAGING SAFE
+========================================= */
+
+let messaging = null;
+
+try{
+
+  messaging = getMessaging();
+
+}
+
+catch(err){
+
+  console.log(
+    "Firebase Messaging gagal dijalankan",
+    err
+  );
+
+}
+
 /* =========================================
    ELEMENT
 ========================================= */
@@ -26,6 +57,12 @@ document.getElementById("ordersGrid");
 const totalOrders =
 document.getElementById("totalOrders");
 
+const foodIncomeText =
+document.getElementById("foodIncome");
+
+const shippingIncomeText =
+document.getElementById("shippingIncome");
+
 const totalIncome =
 document.getElementById("totalIncome");
 
@@ -34,6 +71,209 @@ document.getElementById("notifSound");
 
 const stockContainer =
 document.getElementById("stockContainer");
+
+/* =========================================
+   REQUEST NOTIFICATION
+========================================= */
+
+async function initNotification(){
+
+  try{
+
+    if(!("Notification" in window)){
+
+      console.log(
+        "Browser tidak support notification"
+      );
+
+      return;
+
+    }
+
+    const permission =
+    await Notification.requestPermission();
+
+    if(permission !== "granted"){
+
+      console.log(
+        "Notification ditolak"
+      );
+
+      return;
+
+    }
+
+    if(!("serviceWorker" in navigator)){
+
+      console.log(
+        "Service Worker tidak support"
+      );
+
+      return;
+
+    }
+
+    const registration =
+    await navigator.serviceWorker.register(
+      "./firebase-messaging-sw.js"
+    );
+
+    console.log(
+      "Service Worker aktif"
+    );
+
+    if(!messaging){
+
+      console.log(
+        "Messaging tidak aktif"
+      );
+
+      return;
+
+    }
+
+    const token =
+    await getToken(
+
+      messaging,
+
+      {
+
+        vapidKey:
+        "BGh-L_lgs9xW_x5shygy809JCOt5niZD-K1pLDMCGf7L0VArq8imX-4onVrdlAYxzkR_TC2egguWJC85GHb5jCc",
+
+        serviceWorkerRegistration:
+        registration
+
+      }
+
+    );
+
+    console.log(
+      "FCM TOKEN:",
+      token
+    );
+
+  }
+
+  catch(err){
+
+    console.log(
+      "FCM ERROR:",
+      err
+    );
+
+  }
+
+}
+
+initNotification();
+
+/* =========================================
+   PLAY NOTIFICATION SOUND
+========================================= */
+
+function playNotif(){
+
+  try{
+
+    if(!notifSound) return;
+
+    notifSound.currentTime = 0;
+
+    notifSound.play();
+
+  }
+
+  catch(err){
+
+    console.log(
+      "Notif error",
+      err
+    );
+
+  }
+
+}
+
+/* =========================================
+   SHOW NOTIFICATION
+========================================= */
+
+function showNotification(title,body){
+
+  try{
+
+    if(Notification.permission !== "granted")
+    return;
+
+    new Notification(
+
+      title,
+
+      {
+
+        body:body,
+
+        icon:"Seblak.jpg",
+
+        badge:"Seblak.jpg",
+
+        vibrate:[200,100,200],
+
+        requireInteraction:true
+
+      }
+
+    );
+
+  }
+
+  catch(err){
+
+    console.log(
+      "Notification error",
+      err
+    );
+
+  }
+
+}
+
+/* =========================================
+   FOREGROUND MESSAGE
+========================================= */
+
+if(messaging){
+
+  onMessage(
+
+    messaging,
+
+    (payload)=>{
+
+      console.log(
+        "Message diterima",
+        payload
+      );
+
+      playNotif();
+
+      showNotification(
+
+        payload.notification?.title ||
+        "🔥 Order Baru",
+
+        payload.notification?.body ||
+        "Ada pesanan baru"
+
+      );
+
+    }
+
+  );
+
+}
 
 /* =========================================
    ORDER REALTIME
@@ -60,10 +300,15 @@ onSnapshot(
     ordersGrid.innerHTML = "";
 
     let foodIncome = 0;
+
     let shippingIncome = 0;
 
     totalOrders.innerText =
     snapshot.size;
+
+    /* =========================================
+       ORDER BARU
+    ========================================= */
 
     if(
 
@@ -75,7 +320,15 @@ onSnapshot(
 
     ){
 
-      notifSound?.play();
+      playNotif();
+
+      showNotification(
+
+        "🔥 Order Baru Masuk",
+
+        "Ada pesanan baru di dashboard admin"
+
+      );
 
     }
 
@@ -114,10 +367,8 @@ onSnapshot(
               </span>
 
               <strong>
-
                 Rp ${(item.price || 0)
                 .toLocaleString("id-ID")}
-
               </strong>
 
             </div>
@@ -154,6 +405,9 @@ onSnapshot(
 
       }
 
+      const paymentMethod =
+      data.paymentMethod || "COD";
+
       const card =
       document.createElement("div");
 
@@ -165,15 +419,11 @@ onSnapshot(
         <div class="order-top">
 
           <div class="order-name">
-
             ${data.customerName || "-"}
-
           </div>
 
           <div class="status ${statusClass}">
-
             ${statusText}
-
           </div>
 
         </div>
@@ -190,14 +440,33 @@ onSnapshot(
 
           <p>
             🚚 Ongkir:
-            Rp ${(data.shipping || 0)
-            .toLocaleString("id-ID")}
+            Rp ${shipping.toLocaleString("id-ID")}
           </p>
 
           <p>
             📏 Jarak:
             ${data.distance || 0} km
           </p>
+
+          <p>
+            💳 Pembayaran:
+            ${paymentMethod}
+          </p>
+
+          ${
+            paymentMethod === "QRIS"
+            ? `
+            <p>
+              🧾 Bukti Transfer:
+              Kirim via WhatsApp
+            </p>
+            `
+            : `
+            <p>
+              💵 COD Saat Pesanan Sampai
+            </p>
+            `
+          }
 
         </div>
 
@@ -242,40 +511,31 @@ onSnapshot(
         <div class="total">
 
           🍜 Seblak:
-          Rp ${foodTotal
-          .toLocaleString("id-ID")}
+          Rp ${foodTotal.toLocaleString("id-ID")}
 
           <br><br>
 
           🚚 Ongkir:
-          Rp ${(data.shipping || 0)
-          .toLocaleString("id-ID")}
+          Rp ${shipping.toLocaleString("id-ID")}
 
           <br><br>
 
           💰 Total:
-          Rp ${(data.total || 0)
-          .toLocaleString("id-ID")}
+          Rp ${total.toLocaleString("id-ID")}
 
         </div>
 
         <div class="action">
 
-          <button
-            class="process-btn"
-          >
+          <button class="process-btn">
             🍳 Diproses
           </button>
 
-          <button
-            class="done-btn"
-          >
+          <button class="done-btn">
             ✅ Selesai
           </button>
 
-          <button
-            class="delete-btn"
-          >
+          <button class="delete-btn">
             🗑 Hapus
           </button>
 
@@ -350,23 +610,44 @@ onSnapshot(
 
     });
 
-    totalIncome.innerHTML = `
+    foodIncomeText.innerHTML =
+    `Rp ${foodIncome
+    .toLocaleString("id-ID")}`;
 
-      🍜 Seblak:
-      Rp ${foodIncome.toLocaleString("id-ID")}
+    shippingIncomeText.innerHTML =
+    `Rp ${shippingIncome
+    .toLocaleString("id-ID")}`;
 
-      <br><br>
+    totalIncome.innerHTML =
+    `Rp ${(foodIncome + shippingIncome)
+    .toLocaleString("id-ID")}`;
 
-      🚚 Ongkir:
-      Rp ${shippingIncome.toLocaleString("id-ID")}
+  },
 
-      <br><br>
+  (error)=>{
 
-      💰 Total:
-      Rp ${(foodIncome + shippingIncome)
-      .toLocaleString("id-ID")}
+    console.log(
+      "Firestore Error:",
+      error
+    );
 
-    `;
+    if(ordersGrid){
+
+      ordersGrid.innerHTML = `
+
+        <div style="padding:20px;">
+
+          ❌ Firestore gagal connect
+
+          <br><br>
+
+          ${error.message}
+
+        </div>
+
+      `;
+
+    }
 
   }
 
@@ -485,55 +766,46 @@ const toppingList = [
   "Ceker",
   "Cirawang",
   "Dimsum Aci",
-
   "Tahu Aci",
   "Pangsit Basah",
   "Tulang",
   "Kerupuk Putih",
   "Kerupuk Merah",
-
   "Makaroni",
   "Somay Kering Mini",
   "Kerupuk Corak",
   "Jamur Enoki",
   "Mie Kuning",
-
   "Lidah",
   "Bihun",
   "Tahu Kering 3pcs",
   "Usus",
   "Kembang Tahu",
-
   "Supa Lember",
   "Kwetiau",
   "Jamur Salju",
   "Telur Ayam",
   "Telur Puyuh",
-
   "Tahu Putih",
   "Bakso Ikan",
   "Cilok Gajih",
   "Bakso Sedang",
   "Tahu Bakso",
-
   "Bakso Besar",
   "Sawi Hijau",
   "Chikuwa",
   "Otak-otak",
   "Sosis Ayam",
-
   "Sosis Merah Mini Dilamo",
   "Sosis Sapi Mini",
   "Sosis Besar",
   "Crab Stick",
   "Seafood Tofu",
-
   "Fish Roll",
   "Odeng",
   "Dumpling Ayam",
   "Dumpling Keju",
   "Dadali",
-
   "Sayur Kol",
   "Soun",
   "Daun Jeruk Nipis"
@@ -616,19 +888,13 @@ function renderStocks(stockData = {}){
       <div class="stock-actions">
 
         <button
-          class="
-          stock-btn
-          ${stock ? "active" : ""}
-          "
+          class="stock-btn ${stock ? "active" : ""}"
         >
           Ready
         </button>
 
         <button
-          class="
-          stock-btn
-          ${!stock ? "active" : ""}
-          "
+          class="stock-btn ${!stock ? "active" : ""}"
         >
           Habis
         </button>
@@ -729,4 +995,5 @@ onSnapshot(
 ========================================= */
 
 initStocks();
+
 renderStocks();
