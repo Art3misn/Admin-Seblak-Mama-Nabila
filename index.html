@@ -3,7 +3,7 @@
 
 <head>
 
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
 
   <meta
     name="viewport"
@@ -133,25 +133,40 @@
     <div
       class="orders-grid"
       id="ordersGrid"
-    ></div>
+    >
+
+      <div
+        style="
+        padding:20px;
+        font-size:18px;
+        "
+      >
+
+        Memuat data...
+
+      </div>
+
+    </div>
 
   </section>
 
   <!-- AUDIO -->
 
-  <audio id="notifSound">
+  <audio
+    id="notifSound"
+    preload="auto"
+  >
 
-    <source   
+    <source
       src="Orderan masuk.mp3"
       type="audio/mpeg"
-    >
+    />
 
   </audio>
 
-  <script
-    type="module"
-    src="script.js"
-  ></script>
+  <!-- FIREBASE MODULE -->
+
+  <script type="module" src="script.js"></script>
 
 </body>
 </html>
