@@ -72,14 +72,6 @@ document.getElementById("notifSound");
 const stockContainer =
 document.getElementById("stockContainer");
 
-
-
-      return;
-
-    }
-
-    const permission =
-    await Notification.requestPermission();
 /* =========================================
    REQUEST NOTIFICATION
 ========================================= */
@@ -445,62 +437,6 @@ onSnapshot(
 
     firstLoad = false;
 
-/* =========================================
-   ORDER REALTIME
-========================================= */
-
-let firstLoad = true;
-
-const ordersQuery = query(
-
-  collection(db,"orders"),
-
-  orderBy("createdAt","desc")
-
-);
-
-onSnapshot(
-
-  ordersQuery,
-
-  (snapshot)=>{
-
-    if(!ordersGrid) return;
-
-    ordersGrid.innerHTML = "";
-
-    let foodIncome = 0;
-
-    let shippingIncome = 0;
-
-    totalOrders.innerText =
-    snapshot.size;
-
-    /* =========================================
-       ORDER BARU
-    ========================================= */
-
-    if(
-
-      !firstLoad &&
-
-      snapshot.docChanges().some(
-        change => change.type === "added"
-      )
-
-    ){
-
-      playNotif();
-
-      showNotification(
-
-        "🔥 Order Baru Masuk",
-
-        "Ada pesanan baru di dashboard admin"
-
-      );
-
-    }
 
     firstLoad = false;
 
