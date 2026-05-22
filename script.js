@@ -72,9 +72,19 @@ document.getElementById("notifSound");
 const stockContainer =
 document.getElementById("stockContainer");
 
+
+
+      return;
+
+    }
+
+    const permission =
+    await Notification.requestPermission();
 /* =========================================
    REQUEST NOTIFICATION
 ========================================= */
+
+let notificationReady = false;
 
 async function initNotification(){
 
@@ -90,6 +100,16 @@ async function initNotification(){
 
     }
 
+    if(!("serviceWorker" in navigator)){
+
+      console.log(
+        "Service Worker tidak support"
+      );
+
+      return;
+
+    }
+
     const permission =
     await Notification.requestPermission();
 
@@ -97,16 +117,6 @@ async function initNotification(){
 
       console.log(
         "Notification ditolak"
-      );
-
-      return;
-
-    }
-
-    if(!("serviceWorker" in navigator)){
-
-      console.log(
-        "Service Worker tidak support"
       );
 
       return;
@@ -170,6 +180,53 @@ async function initNotification(){
 initNotification();
 
 /* =========================================
+   UNLOCK AUDIO
+========================================= */
+
+let audioUnlocked = false;
+
+document.body.addEventListener(
+
+  "click",
+
+  async ()=>{
+
+    try{
+
+      if(audioUnlocked) return;
+
+      if(!notifSound) return;
+
+      await notifSound.play();
+
+      notifSound.pause();
+
+      notifSound.currentTime = 0;
+
+      audioUnlocked = true;
+
+      console.log(
+        "Audio notification unlocked"
+      );
+
+    }
+
+    catch(err){
+
+      console.log(
+        "Audio unlock gagal",
+        err
+      );
+
+    }
+
+  },
+
+  { once:true }
+
+);
+
+/* =========================================
    PLAY NOTIFICATION SOUND
 ========================================= */
 
@@ -179,9 +236,25 @@ function playNotif(){
 
     if(!notifSound) return;
 
+    notifSound.pause();
+
     notifSound.currentTime = 0;
 
+    const playPromise =
     notifSound.play();
+
+    if(playPromise !== undefined){
+
+      playPromise.catch((err)=>{
+
+        console.log(
+          "Notif sound gagal",
+          err
+        );
+
+      });
+
+    }
 
   }
 
@@ -221,7 +294,9 @@ function showNotification(title,body){
 
         vibrate:[200,100,200],
 
-        requireInteraction:true
+        requireInteraction:true,
+
+        silent:false
 
       }
 
@@ -257,7 +332,11 @@ if(messaging){
         payload
       );
 
-      playNotif();
+      setTimeout(()=>{
+
+        playNotif();
+
+      },150);
 
       showNotification(
 
@@ -274,6 +353,97 @@ if(messaging){
   );
 
 }
+
+/* =========================================
+   ORDER REALTIME
+========================================= */
+
+let firstLoad = true;
+
+let knownOrders = new Set();
+
+const ordersQuery = query(
+
+  collection(db,"orders"),
+
+  orderBy("createdAt","desc")
+
+);
+
+onSnapshot(
+
+  ordersQuery,
+
+  (snapshot)=>{
+
+    if(!ordersGrid) return;
+
+    ordersGrid.innerHTML = "";
+
+    let foodIncome = 0;
+
+    let shippingIncome = 0;
+
+    totalOrders.innerText =
+    snapshot.size;
+
+    /* =========================================
+       DETEKSI ORDER BARU
+    ========================================= */
+
+    snapshot.docChanges().forEach((change)=>{
+
+      if(change.type === "added"){
+
+        const orderId =
+        change.doc.id;
+
+        /* =========================================
+           SKIP FIRST LOAD
+        ========================================= */
+
+        if(firstLoad){
+
+          knownOrders.add(orderId);
+
+          return;
+
+        }
+
+        /* =========================================
+           ORDER BARU
+        ========================================= */
+
+        if(!knownOrders.has(orderId)){
+
+          knownOrders.add(orderId);
+
+          console.log(
+            "ORDER BARU:",
+            orderId
+          );
+
+          setTimeout(()=>{
+
+            playNotif();
+
+          },150);
+
+          showNotification(
+
+            "🔥 Order Baru Masuk",
+
+            "Ada pesanan baru di dashboard admin"
+
+          );
+
+        }
+
+      }
+
+    });
+
+    firstLoad = false;
 
 /* =========================================
    ORDER REALTIME
